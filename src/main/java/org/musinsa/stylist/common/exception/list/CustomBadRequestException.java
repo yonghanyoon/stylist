@@ -7,10 +7,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public class CustomBadRequestException extends RuntimeException{
-    private HttpStatus errorCode;
 
-    public CustomBadRequestException(HttpStatus errorCode, String message) {
+    public CustomBadRequestException(String message) {
         super(message);
-        this.errorCode = errorCode;
     }
 }

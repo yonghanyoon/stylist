@@ -8,10 +8,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public class CustomNotFoundException extends RuntimeException {
 
-    private HttpStatus errorCode;
-
-    public CustomNotFoundException(HttpStatus errorCode, String message) {
+    public CustomNotFoundException(String message) {
         super(message);
-        this.errorCode = errorCode;
     }
 }

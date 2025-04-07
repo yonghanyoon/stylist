@@ -5,14 +5,17 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.musinsa.stylist.application.product.PricingService;
 import org.musinsa.stylist.application.product.dto.BrandPriceResult;
+import org.musinsa.stylist.application.product.dto.CategoryPriceRangeResult;
 import org.musinsa.stylist.application.product.dto.CategoryPricingDetail;
 import org.musinsa.stylist.application.product.dto.CategoryPricingResult;
+import org.musinsa.stylist.common.exception.list.CustomNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -77,5 +80,37 @@ public class PricingServiceIntegrationTest {
                 tuple("양말", 1700),
                 tuple("액세서리", 2000)
             );
+    }
+
+    @DisplayName("정상 케이스: getCategoryPriceRange() 호출 시 최저/최고 가격 정보를 반환한다")
+    @Test
+    void getCategoryPriceRange_returnsCorrectResult() {
+        // given
+        String categoryName = "상의";
+
+        // when
+        CategoryPriceRangeResult result = pricingService.getCategoryPriceRange(categoryName);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.category()).isEqualTo(categoryName);
+        assertThat(result.minPrice())
+            .extracting("brand", "price")
+            .containsExactlyInAnyOrder(tuple("C", 10000));
+        assertThat(result.maxPrice())
+            .extracting("brand", "price")
+            .containsExactlyInAnyOrder(tuple("I", 11400));
+    }
+
+    @DisplayName("실패 케이스: 존재하지 않는 카테고리명으로 호출 시 CustomNotFoundException 발생")
+    @Test
+    void getCategoryPriceRange_invalidCategory_throwsException() {
+        // given
+        String categoryName = "무신사";
+
+        // when then
+        CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
+                                                         () -> pricingService.getCategoryPriceRange(categoryName));
+        assertThat(exception.getMessage()).contains("카테고리를 찾을 수 없습니다. categoryName: " + categoryName);
     }
 }

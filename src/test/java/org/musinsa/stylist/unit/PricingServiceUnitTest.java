@@ -1,5 +1,7 @@
 package org.musinsa.stylist.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -15,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.musinsa.stylist.application.product.PricingService;
 import org.musinsa.stylist.application.product.dto.BrandPriceResult;
+import org.musinsa.stylist.application.product.dto.CategoryPriceRangeResult;
 import org.musinsa.stylist.application.product.dto.CategoryPricingDetail;
 import org.musinsa.stylist.application.product.dto.CategoryPricingResult;
+import org.musinsa.stylist.application.product.dto.PriceRangeDetail;
 import org.musinsa.stylist.common.exception.list.CustomNotFoundException;
 import org.musinsa.stylist.domain.model.Brand;
 import org.musinsa.stylist.domain.model.Category;
@@ -190,5 +194,69 @@ public class PricingServiceUnitTest {
         CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
                                                          () -> pricingService.getLowestSingleBrandPrice());
         assertEquals("모든 카테고리에 상품을 제공하는 브랜드를 찾을 수 없습니다.", exception.getMessage());
+    }
+
+    @DisplayName("정상 케이스: 특정 카테고리의 최저, 최고 가격 정보를 반환한다")
+    @Test
+    void getCategoryPriceRange_normalCase_returnsCorrectResult() {
+        // given
+        String categoryName = "상의";
+        Category category = new Category(1L, categoryName);
+        when(categoryRepository.findByCategoryName(categoryName)).thenReturn(Optional.of(category));
+
+        Product product1 = new Product(1L, 1L, 1L, 10000);
+        Product product2 = new Product(2L, 2L, 1L, 12000);
+        Product product3 = new Product(3L, 3L, 1L, 8000);
+        List<Product> products = Arrays.asList(product1, product2, product3);
+        when(productRepository.findAllByCategoryId(1L)).thenReturn(products);
+
+        Brand brand1 = new Brand(1L, "Brand1");
+        Brand brand2 = new Brand(2L, "Brand2");
+        Brand brand3 = new Brand(3L, "Brand3");
+
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(brand1));
+        when(brandRepository.findById(2L)).thenReturn(Optional.of(brand2));
+        when(brandRepository.findById(3L)).thenReturn(Optional.of(brand3));
+
+        // when
+        CategoryPriceRangeResult result = pricingService.getCategoryPriceRange(categoryName);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.category()).isEqualTo(categoryName);
+        assertThat(result.minPrice())
+            .extracting(PriceRangeDetail::brand, PriceRangeDetail::price)
+            .containsExactlyInAnyOrder(tuple("Brand3", 8000));
+        assertThat(result.maxPrice())
+            .extracting(PriceRangeDetail::brand, PriceRangeDetail::price)
+            .containsExactlyInAnyOrder(tuple("Brand2", 12000));
+    }
+
+    @DisplayName("실패 케이스: 해당 카테고리가 존재하지 않으면 CustomNotFoundException 발생")
+    @Test
+    void getCategoryPriceRange_categoryNotFound_throwsException() {
+        // given
+        String categoryName = "무신사";
+        when(categoryRepository.findByCategoryName(categoryName)).thenReturn(Optional.empty());
+
+        // when then
+        CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
+                                                         () -> pricingService.getCategoryPriceRange(categoryName));
+        assertThat(exception.getMessage()).isEqualTo("카테고리를 찾을 수 없습니다. categoryName: " + categoryName);
+    }
+
+    @DisplayName("실패 케이스: 해당 카테고리에 상품이 없으면 CustomNotFoundException 발생")
+    @Test
+    void getCategoryPriceRange_noProducts_throwsException() {
+        // given
+        String categoryName = "상의";
+        Category category = new Category(1L, categoryName);
+        when(categoryRepository.findByCategoryName(categoryName)).thenReturn(Optional.of(category));
+        when(productRepository.findAllByCategoryId(1L)).thenReturn(List.of());
+
+        // when then
+        CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
+                                                         () -> pricingService.getCategoryPriceRange(categoryName));
+        assertThat(exception.getMessage()).isEqualTo("해당 카테고리의 상품을 찾을 수 없습니다. category: " + categoryName);
     }
 }

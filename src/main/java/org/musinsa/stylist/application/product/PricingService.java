@@ -1,9 +1,12 @@
 package org.musinsa.stylist.application.product;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.musinsa.stylist.application.product.dto.BrandPriceDetail;
+import org.musinsa.stylist.application.product.dto.BrandPriceResult;
 import org.musinsa.stylist.application.product.dto.CategoryPricingDetail;
 import org.musinsa.stylist.application.product.dto.CategoryPricingResult;
 import org.musinsa.stylist.common.exception.list.CustomNotFoundException;
@@ -38,9 +41,9 @@ public class PricingService implements PricingUseCase{
         List<CategoryPricingDetail> details = categories.stream()
                                                         .map(category -> {
                                                             Product product = productRepository.findFirstByCategoryIdOrderByPriceAsc(category.getCategoryId())
-                                                                                               .orElseThrow(() -> new CustomNotFoundException("No product found for category: " + category.getCategoryName()));
+                                                                                               .orElseThrow(() -> new CustomNotFoundException("해당 카테고리의 상품을 찾을 수 없습니다. category: " + category.getCategoryName()));
                                                             Brand brand = brandRepository.findById(product.getBrandId())
-                                                                                         .orElseThrow(() -> new CustomNotFoundException("Brand not found with id: " + product.getBrandId()));
+                                                                                         .orElseThrow(() -> new CustomNotFoundException("브랜드를 찾을 수 없습니다. BrandId: " + product.getBrandId()));
 
                                                             return new CategoryPricingDetail(
                                                                 category.getCategoryName(),
@@ -55,5 +58,34 @@ public class PricingService implements PricingUseCase{
                                  .sum();
 
         return new CategoryPricingResult(details, totalAmount);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BrandPriceResult getLowestSingleBrandPrice() {
+        List<Category> categories = categoryRepository.findAll();
+
+        return brandRepository.findAll().stream()
+                              .map(brand -> getBrandPriceResponseForBrand(brand, categories))
+                              .filter(Optional::isPresent)
+                              .map(Optional::get)
+                              .min(Comparator.comparingInt(BrandPriceResult::totalAmount))
+                              .orElseThrow(() -> new CustomNotFoundException("모든 카테고리에 상품을 제공하는 브랜드를 찾을 수 없습니다."));
+    }
+
+    private Optional<BrandPriceResult> getBrandPriceResponseForBrand(Brand brand, List<Category> categories) {
+        List<BrandPriceDetail> details = new ArrayList<>();
+        int sum = 0;
+        for (Category category : categories) {
+            Optional<Product> productOpt = productRepository
+                .findFirstByBrandIdAndCategoryIdOrderByPriceAsc(brand.getBrandId(), category.getCategoryId());
+            if (productOpt.isEmpty()) {
+                return Optional.empty();
+            }
+            Product product = productOpt.get();
+            details.add(new BrandPriceDetail(category.getCategoryName(), product.getPrice()));
+            sum += product.getPrice();
+        }
+        return Optional.of(new BrandPriceResult(brand.getBrandName(), details, sum));
     }
 }

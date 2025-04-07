@@ -6,4 +6,6 @@ import org.musinsa.stylist.domain.model.Product;
 public interface ProductRepository {
 
     Optional<Product> findFirstByCategoryIdOrderByPriceAsc(Long categoryId);
+    Optional<Product> findFirstByBrandIdAndCategoryIdOrderByPriceAsc(Long brandId, Long categoryId);
+
 }

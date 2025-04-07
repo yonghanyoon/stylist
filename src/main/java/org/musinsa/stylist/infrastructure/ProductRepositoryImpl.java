@@ -18,4 +18,10 @@ public class ProductRepositoryImpl implements ProductRepository {
     public Optional<Product> findFirstByCategoryIdOrderByPriceAsc(Long categoryId) {
         return productJpaRepository.findFirstByCategoryIdOrderByPriceAsc(categoryId);
     }
+
+    @Override
+    public Optional<Product> findFirstByBrandIdAndCategoryIdOrderByPriceAsc(Long brandId,
+        Long categoryId) {
+        return productJpaRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(brandId, categoryId);
+    }
 }

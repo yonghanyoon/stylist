@@ -1,5 +1,6 @@
 package org.musinsa.stylist.infrastructure;
 
+import java.util.List;
 import java.util.Optional;
 import org.musinsa.stylist.domain.model.Product;
 import org.musinsa.stylist.domain.repository.ProductRepository;
@@ -23,5 +24,10 @@ public class ProductRepositoryImpl implements ProductRepository {
     public Optional<Product> findFirstByBrandIdAndCategoryIdOrderByPriceAsc(Long brandId,
         Long categoryId) {
         return productJpaRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(brandId, categoryId);
+    }
+
+    @Override
+    public List<Product> findAllByCategoryId(Long categoryId) {
+        return productJpaRepository.findAllByCategoryId(categoryId);
     }
 }

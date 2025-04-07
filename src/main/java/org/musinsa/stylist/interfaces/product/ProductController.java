@@ -2,9 +2,11 @@ package org.musinsa.stylist.interfaces.product;
 
 import org.musinsa.stylist.application.product.PricingUseCase;
 import org.musinsa.stylist.interfaces.dto.BrandPriceResponseDTO;
+import org.musinsa.stylist.interfaces.dto.CategoryPriceRangeResponseDTO;
 import org.musinsa.stylist.interfaces.dto.CategoryPricingResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,7 +29,12 @@ public class ProductController {
     // 단일 브랜드 최저가 조회 API
     @GetMapping("/brands/lowest")
     public ResponseEntity<BrandPriceResponseDTO> getLowestSingleBrandPrice() {
-        BrandPriceResponseDTO response = BrandPriceResponseDTO.from(pricingUseCase.getLowestSingleBrandPrice());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(BrandPriceResponseDTO.from(pricingUseCase.getLowestSingleBrandPrice()));
+    }
+
+    // 특정 카테고리 최저, 최고가 조회 API
+    @GetMapping("/categories/{categoryName}")
+    public ResponseEntity<CategoryPriceRangeResponseDTO> getCategoryPriceRange(@PathVariable String categoryName) {
+        return ResponseEntity.ok(CategoryPriceRangeResponseDTO.from(pricingUseCase.getCategoryPriceRange(categoryName)));
     }
 }

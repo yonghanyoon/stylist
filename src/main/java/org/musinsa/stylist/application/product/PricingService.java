@@ -7,8 +7,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.musinsa.stylist.application.product.dto.BrandPriceDetail;
 import org.musinsa.stylist.application.product.dto.BrandPriceResult;
+import org.musinsa.stylist.application.product.dto.CategoryPriceRangeResult;
 import org.musinsa.stylist.application.product.dto.CategoryPricingDetail;
 import org.musinsa.stylist.application.product.dto.CategoryPricingResult;
+import org.musinsa.stylist.application.product.dto.PriceRangeDetail;
 import org.musinsa.stylist.common.exception.list.CustomNotFoundException;
 import org.musinsa.stylist.domain.model.Brand;
 import org.musinsa.stylist.domain.model.Category;
@@ -73,6 +75,32 @@ public class PricingService implements PricingUseCase{
                               .orElseThrow(() -> new CustomNotFoundException("모든 카테고리에 상품을 제공하는 브랜드를 찾을 수 없습니다."));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public CategoryPriceRangeResult getCategoryPriceRange(String categoryName) {
+        Category category = categoryRepository.findByCategoryName(categoryName)
+                                              .orElseThrow(() -> new CustomNotFoundException("카테고리를 찾을 수 없습니다. categoryName: " + categoryName));
+
+        List<Product> products = productRepository.findAllByCategoryId(category.getCategoryId());
+        if (products.isEmpty()) {
+            throw new CustomNotFoundException("해당 카테고리의 상품을 찾을 수 없습니다. category: " + category.getCategoryName());
+        }
+
+        int minPrice = products.stream()
+                               .mapToInt(Product::getPrice)
+                               .min()
+                               .orElseThrow(() -> new CustomNotFoundException("최저 가격을 계산할 상품이 없습니다."));
+        int maxPrice = products.stream()
+                               .mapToInt(Product::getPrice)
+                               .max()
+                               .orElseThrow(() -> new CustomNotFoundException("최고 가격을 계산할 상품이 없습니다."));
+
+        List<PriceRangeDetail> minDetails = getPriceRangeDetails(products, minPrice);
+        List<PriceRangeDetail> maxDetails = getPriceRangeDetails(products, maxPrice);
+
+        return new CategoryPriceRangeResult(category.getCategoryName(), minDetails, maxDetails);
+    }
+
     private Optional<BrandPriceResult> getBrandPriceResponseForBrand(Brand brand, List<Category> categories) {
         List<BrandPriceDetail> details = new ArrayList<>();
         int sum = 0;
@@ -87,5 +115,19 @@ public class PricingService implements PricingUseCase{
             sum += product.getPrice();
         }
         return Optional.of(new BrandPriceResult(brand.getBrandName(), details, sum));
+    }
+
+    private List<PriceRangeDetail> getPriceRangeDetails(List<Product> products, int targetPrice) {
+        return products.stream()
+                       .filter(product -> product.getPrice() == targetPrice)
+                       .map(this::mapProductToPriceRangeDetail)
+                       .distinct()
+                       .toList();
+    }
+
+    private PriceRangeDetail mapProductToPriceRangeDetail(Product product) {
+        Brand brand = brandRepository.findById(product.getBrandId())
+                                     .orElseThrow(() -> new CustomNotFoundException("브랜드를 찾을 수 없습니다. brandId: " + product.getBrandId()));
+        return new PriceRangeDetail(brand.getBrandName(), product.getPrice());
     }
 }

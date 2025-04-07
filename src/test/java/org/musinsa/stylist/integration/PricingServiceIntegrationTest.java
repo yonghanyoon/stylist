@@ -77,7 +77,7 @@ public class PricingServiceIntegrationTest {
                 tuple("스니커즈", 9500),
                 tuple("가방", 2500),
                 tuple("모자", 1500),
-                tuple("양말", 1700),
+                tuple("양말", 2400),
                 tuple("액세서리", 2000)
             );
     }

@@ -22,4 +22,8 @@ public class Brand extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long brandId;
     private String brandName;
+
+    public void updateBrandName(String brandName) {
+        this.brandName = brandName;
+    }
 }

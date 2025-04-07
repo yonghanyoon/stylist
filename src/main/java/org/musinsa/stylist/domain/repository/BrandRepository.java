@@ -8,4 +8,8 @@ public interface BrandRepository {
 
     Optional<Brand> findById(Long brandId);
     List<Brand> findAll();
+    Brand save(Brand brand);
+    boolean existsByBrandName(String brandName);
+    boolean existsById(Long brandId);
+    void deleteById(Long brandId);
 }

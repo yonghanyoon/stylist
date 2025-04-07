@@ -24,4 +24,10 @@ public class Product extends BaseEntity {
     private Long brandId;
     private Long categoryId;
     private int price;
+
+    public void updateProduct(Long brandId, Long categoryId, int price) {
+        this.brandId = brandId;
+        this.categoryId = categoryId;
+        this.price = price;
+    }
 }

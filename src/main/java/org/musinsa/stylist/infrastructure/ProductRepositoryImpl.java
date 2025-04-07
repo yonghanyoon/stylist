@@ -30,4 +30,29 @@ public class ProductRepositoryImpl implements ProductRepository {
     public List<Product> findAllByCategoryId(Long categoryId) {
         return productJpaRepository.findAllByCategoryId(categoryId);
     }
+
+    @Override
+    public Product save(Product product) {
+        return productJpaRepository.save(product);
+    }
+
+    @Override
+    public Optional<Product> findById(Long productId) {
+        return productJpaRepository.findById(productId);
+    }
+
+    @Override
+    public int countByBrandIdAndCategoryId(Long brandId, Long categoryId) {
+        return productJpaRepository.countByBrandIdAndCategoryId(brandId, categoryId);
+    }
+
+    @Override
+    public void deleteById(Long productId) {
+        productJpaRepository.deleteById(productId);
+    }
+
+    @Override
+    public void deleteAllByBrandId(Long brandId) {
+        productJpaRepository.deleteAllByBrandId(brandId);
+    }
 }

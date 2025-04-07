@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.musinsa.stylist.common.jpa.BaseEntity;
 
@@ -14,11 +15,11 @@ import org.musinsa.stylist.common.jpa.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
 @Table(name = "brand")
 public class Brand extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long brandId;
     private String brandName;
-
 }

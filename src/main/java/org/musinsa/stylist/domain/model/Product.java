@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.musinsa.stylist.common.jpa.BaseEntity;
 
@@ -14,6 +15,7 @@ import org.musinsa.stylist.common.jpa.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
 @Table(name = "product")
 public class Product extends BaseEntity {
     @Id

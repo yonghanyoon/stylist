@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.musinsa.stylist.application.product.PricingService;
+import org.musinsa.stylist.application.product.dto.BrandPriceResult;
 import org.musinsa.stylist.application.product.dto.CategoryPricingDetail;
 import org.musinsa.stylist.application.product.dto.CategoryPricingResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,32 @@ public class PricingServiceIntegrationTest {
                 tuple("모자", "D", 1500),
                 tuple("양말", "I", 1700),
                 tuple("액세서리", "F", 1900)
+            );
+    }
+
+    @DisplayName("정상 케이스: getLowestSingleBrandPrice() 호출 시 최저 총액 브랜드 반환")
+    @Test
+    void testGetLowestSingleBrandPrice_returnsCorrectResult() {
+        // given
+
+        // when
+        BrandPriceResult result = pricingService.getLowestSingleBrandPrice();
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.brandName()).isEqualTo("D");
+        assertThat(result.totalAmount()).isEqualTo(36100);
+        assertThat(result.details())
+            .extracting("categoryName", "price")
+            .containsExactlyInAnyOrder(
+                tuple("상의", 10100),
+                tuple("아우터", 5100),
+                tuple("바지", 3000),
+                tuple("스니커즈", 9500),
+                tuple("가방", 2500),
+                tuple("모자", 1500),
+                tuple("양말", 1700),
+                tuple("액세서리", 2000)
             );
     }
 }

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.musinsa.stylist.application.product.PricingService;
+import org.musinsa.stylist.application.product.dto.BrandPriceResult;
 import org.musinsa.stylist.application.product.dto.CategoryPricingDetail;
 import org.musinsa.stylist.application.product.dto.CategoryPricingResult;
 import org.musinsa.stylist.common.exception.list.CustomNotFoundException;
@@ -95,7 +96,7 @@ public class PricingServiceUnitTest {
         // when then
         CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
                                                          () -> pricingService.getCategoryMinPrices());
-        assertTrue(exception.getMessage().contains("No product found for category: 상의"));
+        assertTrue(exception.getMessage().contains("해당 카테고리의 상품을 찾을 수 없습니다. category: " + category.getCategoryName()));
     }
 
     @DisplayName("실패 케이스: 브랜드가 없는 경우 CustomNotFoundException 발생")
@@ -114,6 +115,80 @@ public class PricingServiceUnitTest {
         // when then
         CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
                                                          () -> pricingService.getCategoryMinPrices());
-        assertTrue(exception.getMessage().contains("Brand not found with id: 1"));
+        assertTrue(exception.getMessage().contains("브랜드를 찾을 수 없습니다. BrandId: " + product.getBrandId()));
+    }
+
+
+    @DisplayName("정상 케이스: 모든 카테고리의 상품이 존재하는 브랜드 중 최저 총액 브랜드 반환")
+    @Test
+    void getLowestSingleBrandPrice_normalCase_returnsCorrectResult() {
+        // given
+        Category category1 = new Category(1L, "상의");
+        Category category2 = new Category(2L, "아우터");
+
+        List<Category> categories = Arrays.asList(category1, category2);
+        when(categoryRepository.findAll()).thenReturn(categories);
+
+        Brand brand1 = new Brand(1L, "Brand1");
+        Brand brand2 = new Brand(2L, "Brand2");
+
+        List<Brand> brands = Arrays.asList(brand1, brand2);
+        when(brandRepository.findAll()).thenReturn(brands);
+
+        Product productA1 = new Product(1L, 1L, 1L, 10000);
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(1L, 1L))
+            .thenReturn(Optional.of(productA1));
+        Product productA2 = new Product(2L, 1L, 2L, 5000);
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(1L, 2L))
+            .thenReturn(Optional.of(productA2));
+
+        Product productB1 = new Product(3L, 2L, 1L, 12000);
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(2L, 1L))
+            .thenReturn(Optional.of(productB1));
+        Product productB2 = new Product(4L, 2L, 2L, 4000);
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(2L, 2L))
+            .thenReturn(Optional.of(productB2));
+
+        // when
+        BrandPriceResult result = pricingService.getLowestSingleBrandPrice();
+
+        // then
+        assertNotNull(result);
+        assertEquals("Brand1", result.brandName());
+        assertEquals(15000, result.totalAmount());
+        assertEquals(2, result.details().size());
+    }
+
+    @DisplayName("실패 케이스: 브랜드의 카테고리에 상품이 존재하지 않는 경우 CustomNotFoundException 발생")
+    @Test
+    void getLowestSingleBrandPrice_noBrandFullCoverage_throwsException() {
+        // given
+        Category category1 = new Category(1L, "상의");
+        Category category2 = new Category(2L, "아우터");
+
+        List<Category> categories = Arrays.asList(category1, category2);
+        when(categoryRepository.findAll()).thenReturn(categories);
+
+        Brand brand1 = new Brand(1L, "Brand1");
+        Brand brand2 = new Brand(2L, "Brand2");
+
+        List<Brand> brands = Arrays.asList(brand1, brand2);
+        when(brandRepository.findAll()).thenReturn(brands);
+
+        Product productA1 = new Product(1L, 1L, 1L, 10000);
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(1L, 1L))
+            .thenReturn(Optional.of(productA1));
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(1L, 2L))
+            .thenReturn(Optional.empty());
+
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(2L, 1L))
+            .thenReturn(Optional.empty());
+        when(productRepository.findFirstByBrandIdAndCategoryIdOrderByPriceAsc(2L, 2L))
+            .thenReturn(Optional.empty());
+
+        // when then
+        CustomNotFoundException exception = assertThrows(CustomNotFoundException.class,
+                                                         () -> pricingService.getLowestSingleBrandPrice());
+        assertEquals("모든 카테고리에 상품을 제공하는 브랜드를 찾을 수 없습니다.", exception.getMessage());
     }
 }
